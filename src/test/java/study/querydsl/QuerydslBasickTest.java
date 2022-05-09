@@ -14,6 +14,7 @@ import study.querydsl.entity.Team;
 import javax.persistence.EntityManager;
 
 import static org.assertj.core.api.Assertions.*;
+import static study.querydsl.entity.QMember.member;
 
 @SpringBootTest
 @Transactional
@@ -62,6 +63,16 @@ public class QuerydslBasickTest {
                 .select(m)
                 .from(m)
                 .where(m.username.eq("member1"))
+                .fetchOne();
+
+        assertThat(result.getUsername()).isEqualTo("member1");
+    }
+
+    public  void otherQuerydsl() { //static import 방법
+        Member result = queryFactory
+                .select(member)
+                .from(member)
+                .where(member.username.eq("member1"))
                 .fetchOne();
 
         assertThat(result.getUsername()).isEqualTo("member1");
