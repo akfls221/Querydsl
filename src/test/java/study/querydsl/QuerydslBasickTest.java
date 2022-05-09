@@ -3,6 +3,7 @@ package study.querydsl;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -68,11 +69,45 @@ public class QuerydslBasickTest {
         assertThat(result.getUsername()).isEqualTo("member1");
     }
 
+    @Test
     public  void otherQuerydsl() { //static import 방법
         Member result = queryFactory
                 .select(member)
                 .from(member)
                 .where(member.username.eq("member1"))
+                .fetchOne();
+
+        assertThat(result.getUsername()).isEqualTo("member1");
+    }
+
+    @Test
+    public void search() {
+        Member result = queryFactory
+                .selectFrom(member)
+                .where(member.username.eq("member1").and(member.age.eq(10)))
+                .fetchOne();
+
+        assertThat(result.getUsername()).isEqualTo("member1");
+    }
+
+    @Test
+    public void search2() {
+        Member result = queryFactory
+                .selectFrom(member)
+                .where(member.username.eq("member1").and(member.age.between(10, 20)))
+                .fetchOne();
+
+        assertThat(result.getUsername()).isEqualTo("member1");
+    }
+
+    @DisplayName("and chain을 ','로 대체 가능하다")
+    @Test
+    public void searchAndParam() {
+        Member result = queryFactory
+                .selectFrom(member)
+                .where(
+                        member.username.eq("member1"), member.age.between(10, 20)
+                )
                 .fetchOne();
 
         assertThat(result.getUsername()).isEqualTo("member1");
