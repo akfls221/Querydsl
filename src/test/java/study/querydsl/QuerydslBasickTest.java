@@ -26,6 +26,7 @@ import static study.querydsl.entity.QTeam.*;
 
 @SpringBootTest
 @Transactional
+@Commit
 public class QuerydslBasickTest {
 
     @Autowired
@@ -255,5 +256,46 @@ public class QuerydslBasickTest {
         assertThat(teamB.get(team.name)).isEqualTo("teamB");
         assertThat(teamB.get(member.age.avg())).isEqualTo(35);
 
+    }
+
+    /**
+     * join
+     * 조인의 기본 문법은 첫 번째 파라미터에 조인 대상을 지정하고, 두번쨰 파라미터에 별칭으로 사용할 Q 타입을 지정하면 된다.
+     * 팀 A에 소속된 모든 회원
+     */
+    @Test
+    public void join() {
+        List<Member> result = queryFactory
+                .selectFrom(member)
+                .join(member.team, team)
+                .where(team.name.eq("teamA"))
+                .fetch();
+
+        assertThat(result)
+                .extracting("username")
+                .containsExactly("member1", "member2");
+
+    }
+
+    /**
+     * 연관관계가 없어도 join을 하는 방법
+     * 조건 : 회원의 이름이 팀 이름과 같은 회원 조회
+     * from절에 여러 엔티티를 선택해서 세타 조인
+     * 외부 조인 불가능 > 다음에 설명할 조인 on을 사용하면 외부조인 가능
+     */
+    @Test
+    public void theta_join() {
+        em.persist(new Member("teamA"));
+        em.persist(new Member("teamB"));
+
+        List<Member> result = queryFactory
+                .select(member)
+                .from(member, team)
+                .where(member.username.eq(team.name))
+                .fetch();
+
+        assertThat(result)
+                .extracting("username")
+                .containsExactly("teamA", "teamB");
     }
 }
