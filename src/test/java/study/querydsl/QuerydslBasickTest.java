@@ -17,6 +17,8 @@ import study.querydsl.entity.QTeam;
 import study.querydsl.entity.Team;
 
 import javax.persistence.EntityManager;
+import javax.persistence.EntityManagerFactory;
+import javax.persistence.PersistenceUnit;
 
 import java.util.List;
 
@@ -348,4 +350,44 @@ public class QuerydslBasickTest {
     /**
      * fetch 조인
      */
+    @PersistenceUnit
+    EntityManagerFactory emf;
+
+    @Test
+    public void fetchJoinNo() {
+        em.flush();
+        em.clear();
+
+        Member findMember = queryFactory
+                .selectFrom(member)
+                .where(member.username.eq("member1"))
+                .fetchOne();
+
+        /**
+         * find member에 있는 team이 이미 로딩된 Entity 인지 초기화된 Entity인지(false)가 나올것임.
+         * 현재 패치조인이 적용되지 않았기 때문에 로딩되지 않는것이 맞음.(team을 touch하면 로딩이 될것임)
+         */
+        boolean loaded = emf.getPersistenceUnitUtil().isLoaded(findMember.getTeam());
+        assertThat(loaded).as("패치 조인 미적용").isFalse();
+    }
+
+    @Test
+    public void fetchJoin() {
+        em.flush();
+        em.clear();
+
+        Member findMember = queryFactory
+                .selectFrom(member)
+                .join(member.team, team).fetchJoin()
+                .where(member.username.eq("member1"))
+                .fetchOne();
+
+
+        /**
+         * find member에 있는 team이 이미 로딩된 Entity 인지 초기화된 Entity인지(false)가 나올것임.
+         * 현재 패치조인이 적용되어 있고, join으로 인해 team을 가져오기 때문에 load가 된 상태임(여기까지는 한번의 쿼리로 다 가져옴)
+         */
+        boolean loaded = emf.getPersistenceUnitUtil().isLoaded(findMember.getTeam());
+        assertThat(loaded).as("패치 조인 적용").isTrue();
+    }
 }
