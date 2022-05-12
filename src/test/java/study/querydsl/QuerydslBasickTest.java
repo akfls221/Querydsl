@@ -2,6 +2,7 @@ package study.querydsl;
 
 import com.querydsl.core.QueryResults;
 import com.querydsl.core.Tuple;
+import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -390,4 +391,103 @@ public class QuerydslBasickTest {
         boolean loaded = emf.getPersistenceUnitUtil().isLoaded(findMember.getTeam());
         assertThat(loaded).as("패치 조인 적용").isTrue();
     }
+
+    /**
+     * 서브쿼리(com.querydsl.jpa.JPAExpressions 사용)
+     * 조건 : 나이가 가장 많은 회원 조회
+     * subQuery의 경우 안에 있는 select 문의 객체가 바깥의 객체와 겹치면 안된다 그래서 as를 별도로 만들어 줘야 함.
+     */
+    @Test
+    public void subQuery() {
+        QMember memberSub = new QMember("memberSub");
+
+        List<Member> result = queryFactory
+                .selectFrom(member)
+                .where(member.age.eq(
+                        JPAExpressions
+                                .select(memberSub.age.max())
+                                .from(memberSub)
+                ))
+                .fetch();
+
+        assertThat(result).extracting("age")
+                .containsExactly(40);
+    }
+
+    /**
+     * 서브쿼리(com.querydsl.jpa.JPAExpressions 사용)
+     * 조건 : 나이가 평균 이상인 회원
+     * subQuery의 경우 안에 있는 select 문의 객체가 바깥의 객체와 겹치면 안된다 그래서 as를 별도로 만들어 줘야 함.
+     */
+    @Test
+    public void subQueryGoe() {
+        QMember memberSub = new QMember("memberSub");
+
+        List<Member> result = queryFactory
+                .selectFrom(member)
+                .where(member.age.goe(
+                        JPAExpressions
+                                .select(memberSub.age.avg())
+                                .from(memberSub)
+                ))
+                .fetch();
+
+        assertThat(result.size()).isEqualTo(2);
+        assertThat(result).extracting("age")
+                .containsExactly(30, 40);
+    }
+
+    /**
+     * 서브쿼리(com.querydsl.jpa.JPAExpressions 사용)
+     * 조건 : 나이가 평균 이상인 회원(in 사용)
+     * subQuery의 경우 안에 있는 select 문의 객체가 바깥의 객체와 겹치면 안된다 그래서 as를 별도로 만들어 줘야 함.
+     */
+    @Test
+    public void subQueryIn() {
+        QMember memberSub = new QMember("memberSub");
+
+        List<Member> result = queryFactory
+                .selectFrom(member)
+                .where(member.age.in(
+                        JPAExpressions
+                                .select(memberSub.age)
+                                .from(memberSub)
+                                .where(memberSub.age.gt(10)) //10살 초과
+                ))
+                .fetch();
+
+        assertThat(result.size()).isEqualTo(3);
+        assertThat(result).extracting("age")
+                .containsExactly(20, 30, 40);
+    }
+
+    /**
+     * Select절 서브쿼리(com.querydsl.jpa.JPAExpressions 사용)
+     * subQuery의 경우 안에 있는 select 문의 객체가 바깥의 객체와 겹치면 안된다 그래서 as를 별도로 만들어 줘야 함.
+     */
+
+    /**
+     * 한계점 :JPA JPQL 서브쿼리의 한계점으로 from 절의 서브쿼리(인라인 뷰)는 지원하지 않는다.
+     *          Querydsl 마찬기지로, 지원하지 않으며, 하이버네이트 구현체를 사용하여 selct 절의 서브쿼리는 지원이 가능하다.
+     * 해결방안 : 서브쿼리를 join으로 변경(가능한 상황도 있지만, 불가능한 상황도 있음.)
+     *          애플리케이션에서 쿼리를 2번 분리해서 실행한다.
+     *          nativeSQL을 사용한다.
+     */
+    @Test
+    public void selectSubQuery() {
+        QMember memberSub = new QMember("memberSub");
+
+        List<Tuple> result = queryFactory
+                .select(member.username,
+                        JPAExpressions //staticImport 가능
+                                .select(memberSub.age.avg())
+                                .from(memberSub)
+                ).from(member)
+                .fetch();
+
+        for (Tuple tuple : result) {
+            System.out.println("tuple = " + tuple);
+        }
+    }
+
 }
