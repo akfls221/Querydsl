@@ -298,4 +298,54 @@ public class QuerydslBasickTest {
                 .extracting("username")
                 .containsExactly("teamA", "teamB");
     }
+
+    /**
+     * 조인 On 절(JPA 2.1부터 지원)
+     * 기능
+     * 1) 조인 대상 필터링
+     * 조건 : 회원과 팀을 조인하면서, 팀 이름이 teamA인 팀만 조인, 회원은 모두 조회
+     */
+    @Test
+    public void join_on_filtering() {
+        List<Tuple> result = queryFactory
+                .select(member, team)
+                .from(member)
+                .leftJoin(member.team, team) // 이 경우 자동으로 qeurydsl에서 id로 on절을 만들어 줌. on member0_.team_id=team1_.id
+                .on(team.name.eq("teamA")) // and (team1_.name=?)
+                .fetch();
+
+        for (Tuple tuple : result) {
+            System.out.println("tuple = " + tuple);
+        }
+
+    }
+
+    /**
+     * 조인 On 절(JPA 2.1부터 지원, 하이버네이트 5.1지원)
+     * 기능
+     * 2) 연관관계가 없는 엔티티를 외부 조인 할때
+     * 조건 : 회원의 이름이 팀 이름과 같은 대상을 외부조인 해라
+     */
+    @Test
+    public void join_on_no_relation() {
+        em.persist(new Member("teamA"));
+        em.persist(new Member("teamB"));
+        em.persist(new Member("teamC"));
+
+        List<Tuple> fetch = queryFactory
+                .select(member, team)
+                .from(member)
+                .leftJoin(team)
+                .on(member.username.eq(team.name))
+                .fetch();
+
+        for (Tuple tuple : fetch) {
+            System.out.println("tuple = " + tuple);
+        }
+
+    }
+
+    /**
+     * fetch 조인
+     */
 }
