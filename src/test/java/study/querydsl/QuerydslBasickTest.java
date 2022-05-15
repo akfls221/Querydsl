@@ -618,7 +618,7 @@ public class QuerydslBasickTest {
      * 3) 생성자 사용
      */
     @Test
-    public void 프로젝션_dto_Querydsl_setter방식() {  //1)프로퍼티 접근방법
+    public void 프로젝션_dto_Querydsl_setter방식() {  //1)프로퍼티 접근방법, @기본생성자 필수!!!
         List<MemberDto> result = queryFactory
                 .select(Projections.bean(MemberDto.class, member.username, member.age))
                 .from(member)
