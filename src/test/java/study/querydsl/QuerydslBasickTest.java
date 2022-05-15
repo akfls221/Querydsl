@@ -618,7 +618,7 @@ public class QuerydslBasickTest {
      * 3) 생성자 사용
      */
     @Test
-    public void 프로젝션_dto_Querydsl_setter방식() {  //1)프로퍼티 접근방법, @기본생성자 필수!!!
+    public void 프로젝션_dto_Querydsl_setter방식() {  //1)프로퍼티 접근방법, @기본생성자 필수!!! > newInstance로 생성하기 때문임.
         List<MemberDto> result = queryFactory
                 .select(Projections.bean(MemberDto.class, member.username, member.age))
                 .from(member)
@@ -631,7 +631,7 @@ public class QuerydslBasickTest {
     }
 
     @Test
-    public void 프로젝션_dto_Querydsl_Field방식() {  //2)필드 접근방법 //getter, setter가 없어도 됨. 그냥 필드에 값을 넣어버림
+    public void 프로젝션_dto_Querydsl_Field방식() {  //2)필드 접근방법 //getter, setter가 없어도 됨. 그냥 필드에 값을 넣어버림, @기본생성자 필수!!! > newInstance로 생성하기 때문임.
         List<MemberDto> result = queryFactory
                 .select(Projections.fields(MemberDto.class, member.username, member.age))
                 .from(member)
