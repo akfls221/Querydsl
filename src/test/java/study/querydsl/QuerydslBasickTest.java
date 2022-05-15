@@ -16,6 +16,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.Commit;
 import org.springframework.transaction.annotation.Transactional;
 import study.querydsl.dto.MemberDto;
+import study.querydsl.dto.QMemberDto;
 import study.querydsl.dto.UserDto;
 import study.querydsl.entity.Member;
 import study.querydsl.entity.QMember;
@@ -693,4 +694,23 @@ public class QuerydslBasickTest {
         }
     }
 
+    /**
+     * @QueryProjection(Constructor 방식과 비슷함)
+     * constructor 방식의 경우, 컴파일오류는 잡을 수 없지만, @QueryProjection의 경우 컴파일 오류를 확인이 가능함.
+     * 단점 : 다만 실무에서 Qfile을 생성해줘야하며, DTO 클래스 생성자 부분에 @QueryProjection을 붙여줘야하는 이유,
+     * DTO가 기존엔 Querydsl에 대한 의존이 없었지만, 해당 어노테이션을사용 함으로 인해 QueryDsl에 영향을 받는다는점.(Querydsl을 뺄경우 문제가생김)
+     * 설계 과정에서 순수한 DTO가 될 수 없기 때문에 고민이 있는 부분임.(이럴경우 앞의 프로퍼티, 필드, 생성자 방식을 사용)
+     */
+    @Test
+    void findDtoByQueryProjection() {
+        List<MemberDto> result = queryFactory
+                .select(new QMemberDto(member.username, member.age))
+                .from(member)
+                .fetch();
+
+        for (MemberDto memberDto : result) {
+            System.out.println("memberDto = " + memberDto);
+        }
+
+    }
 }
