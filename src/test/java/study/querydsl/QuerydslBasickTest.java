@@ -558,4 +558,40 @@ public class QuerydslBasickTest {
         }
     }
 
+    /**
+     * 프로젝션 : select에 대상을 지정하는 것.
+     * 프로젝션 대상이 하나면 타입을 명확하게 지정할 수 있음.
+     * 둘 이상일 경우 튜플이나 DTO로 조회
+     */
+
+    @Test
+    public void 프로젝션_대상이하나 () {  //select 부분에 객체를 넣어도 객체하나를 조회하는 것과 같음.
+        List<String> result = queryFactory
+                .select(member.username)
+                .from(member)
+                .fetch();
+
+        for (String s : result) {
+            System.out.println("s = " + s);
+        }
+    }
+
+    @Test
+    public void 프로젝션_튜플() {
+        List<Tuple> result = queryFactory
+                .select(member.username, member.age)
+                .from(member)
+                .fetch();
+
+        for (Tuple tuple : result) {
+            String username = tuple.get(member.username);
+            Integer age = tuple.get(member.age);
+            System.out.println("username = " + username);
+            System.out.println("age = " + age);
+
+            //Tuple은 둘 이상의 타입이 있을경우 querydsl에서 지원하는 타입인데 이는 repository에서만 사용하고 service 단계(비지니스 로직)까지 가져
+            // 가는것은 좋지 못한 설계임.
+        }
+    }
+
 }
