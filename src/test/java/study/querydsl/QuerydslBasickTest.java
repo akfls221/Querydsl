@@ -2,11 +2,12 @@ package study.querydsl;
 
 import com.querydsl.core.QueryResults;
 import com.querydsl.core.Tuple;
+import com.querydsl.core.types.ExpressionUtils;
+import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.CaseBuilder;
 import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -14,9 +15,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.Commit;
 import org.springframework.transaction.annotation.Transactional;
+import study.querydsl.dto.MemberDto;
+import study.querydsl.dto.UserDto;
 import study.querydsl.entity.Member;
 import study.querydsl.entity.QMember;
-import study.querydsl.entity.QTeam;
 import study.querydsl.entity.Team;
 
 import javax.persistence.EntityManager;
@@ -591,6 +593,103 @@ public class QuerydslBasickTest {
 
             //Tuple은 둘 이상의 타입이 있을경우 querydsl에서 지원하는 타입인데 이는 repository에서만 사용하고 service 단계(비지니스 로직)까지 가져
             // 가는것은 좋지 못한 설계임.
+        }
+    }
+
+    /**
+     * 순수 JPA에서 DTO를 조회할 떄는 new 명령어를 사용해야함.
+     * DTO의 package 이름을 다적어야 해서 지저분함.
+     * 생성자 방식만 지원함.
+     */
+    @Test
+    public void 프로젝션_dto_JPQL() {
+        List<MemberDto> resultList = em.createQuery("select new study.querydsl.dto.MemberDto(m.username, m.age) from Member m", MemberDto.class)
+                .getResultList();//jpql 방법
+
+        for (MemberDto memberDto : resultList) {
+            System.out.println("memberDto = " + memberDto);
+        }
+    }
+
+    /**
+     * Querydsl의 경우
+     * 1) 프로퍼티 접근
+     * 2) 필드 직접 접근
+     * 3) 생성자 사용
+     */
+    @Test
+    public void 프로젝션_dto_Querydsl_setter방식() {  //1)프로퍼티 접근방법
+        List<MemberDto> result = queryFactory
+                .select(Projections.bean(MemberDto.class, member.username, member.age))
+                .from(member)
+                .fetch();
+
+        for (MemberDto memberDto : result) {
+            System.out.println("memberDto = " + memberDto);
+        }
+
+    }
+
+    @Test
+    public void 프로젝션_dto_Querydsl_Field방식() {  //2)필드 접근방법 //getter, setter가 없어도 됨. 그냥 필드에 값을 넣어버림
+        List<MemberDto> result = queryFactory
+                .select(Projections.fields(MemberDto.class, member.username, member.age))
+                .from(member)
+                .fetch();
+
+        for (MemberDto memberDto : result) {
+            System.out.println("memberDto = " + memberDto);
+        }
+    }
+
+    @Test
+    public void 프로젝션_dto_Querydsl_Constructor방식() {  //3)생성자 접근방법(DTO 객체가 바뀌어도 타입이 맞다면 괜찮다) 생성자 필수(기본생성자 필수)
+        List<MemberDto> result = queryFactory
+                .select(Projections.constructor(MemberDto.class, member.username, member.age))
+                .from(member)
+                .fetch();
+
+        for (MemberDto memberDto : result) {
+            System.out.println("memberDto = " + memberDto);
+        }
+    }
+
+    /**
+     * UserDto의 경우 usernmae filed가 없고 name이라는 필드가 있음.
+     * 이럴경우 member.usernmae으로 조회시 해당 필드 값에 매칭을 하지 못해 null이 나옴.
+     * 이를 위해 .as("name")으로 해결이 가능함.
+     */
+    @Test
+    public void findUserDto() {
+        List<UserDto> result = queryFactory
+                .select(Projections.fields(UserDto.class,
+                        member.username.as("name"),
+                        member.age))
+                .from(member)
+                .fetch();
+
+        for (UserDto userDto : result) {
+            System.out.println("userDto = " + userDto);
+        }
+    }
+
+    @Test
+    public void 서브쿼리일경우DTO_반환() {
+        QMember memberSub = new QMember("memberSub");
+
+        List<UserDto> result = queryFactory
+                .select(Projections.fields(UserDto.class,
+                        member.username.as("name"),
+
+                        ExpressionUtils.as(JPAExpressions
+                                .select(memberSub.age.max())
+                                .from(memberSub), "age")
+                ))
+                .from(member)
+                .fetch();
+
+        for (UserDto userDto : result) {
+            System.out.println("userDto = " + userDto);
         }
     }
 
