@@ -643,7 +643,7 @@ public class QuerydslBasickTest {
     }
 
     @Test
-    public void 프로젝션_dto_Querydsl_Constructor방식() {  //3)생성자 접근방법(DTO 객체가 바뀌어도 타입이 맞다면 괜찮다) 생성자 필수(기본생성자 필수)
+    public void 프로젝션_dto_Querydsl_Constructor방식() {  //3)생성자 접근방법(DTO 객체가 바뀌어도 타입이 맞다면 괜찮다)
         List<MemberDto> result = queryFactory
                 .select(Projections.constructor(MemberDto.class, member.username, member.age))
                 .from(member)

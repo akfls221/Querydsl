@@ -12,7 +12,4 @@ public class UserDto {
         this.name = name;
         this.age = age;
     }
-
-    public UserDto() {
-    }
 }
