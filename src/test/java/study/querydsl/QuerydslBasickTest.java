@@ -4,16 +4,22 @@ import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.QueryResults;
 import com.querydsl.core.Tuple;
 import com.querydsl.core.types.ExpressionUtils;
+import com.querydsl.core.types.Predicate;
 import com.querydsl.core.types.Projections;
+import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.CaseBuilder;
 import com.querydsl.core.types.dsl.Expressions;
+import com.querydsl.core.types.dsl.PathBuilder;
 import com.querydsl.jpa.JPAExpressions;
+import com.querydsl.jpa.impl.AbstractJPAQuery;
+import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.jpa.repository.support.Querydsl;
 import org.springframework.test.annotation.Commit;
 import org.springframework.transaction.annotation.Transactional;
 import study.querydsl.dto.MemberDto;
@@ -745,6 +751,53 @@ public class QuerydslBasickTest {
                 .selectFrom(member)
                 .where(builder)
                 .fetch();
+    }
+
+    /**
+     * 동적 쿼리
+     * Where 다중 파라미터 사용
+     * where에 null이 되면 그냥 무시되기 때문에 동적쿼리가 가능함.
+     * 메서드를 다른 쿼리에서도 재활용 할 수 있다.
+     * 쿼리 자체의 가독성이 높아진다.
+     */
+    @Test
+    public void dynamicQuery_whereParam() {
+        String usernameParam = "member1";
+        Integer ageParam = 10;
+
+        List<Member> result = searchMember2(usernameParam, ageParam);
+        assertThat(result.size()).isEqualTo(1);
+
+    }
+
+    private List<Member> searchMember2(String usernameParam, Integer ageParam) {
+        return queryFactory
+                .selectFrom(member)
+                .where(usernameEq(usernameParam), ageEq(ageParam))
+                .fetch();
+    }
+
+    private BooleanExpression usernameEq(String usernameParam) {
+        return usernameParam == null ? null : member.username.eq(usernameParam);
+    }
+
+    private BooleanExpression ageEq(Integer ageParam) {
+        return ageParam == null ? null : member.age.eq(ageParam);
+    }
+
+    /**
+     * queyrdsl 테스트
+     * pathBuilder를 통한 create query
+     * Qclass를 못만드는 경우 쿼리작성법
+     * 참조 : https://heowc.tistory.com/39
+     */
+    @Test
+    public void test() {
+        PathBuilder<Member> member = new PathBuilder<Member>(Member.class, "member");
+        Querydsl querydsl = new Querydsl(em, member);
+        AbstractJPAQuery<Object, JPAQuery<Object>> query = querydsl.createQuery(member);
+        System.out.println("query = " + query);
+
     }
 
 }
