@@ -800,4 +800,49 @@ public class QuerydslBasickTest {
 
     }
 
+    /**
+     * 벌크 연산
+     * 수정, 삭제 배치 쿼리 (쿼리 한번으로 대량 데이터 수정)
+     * 벌크연산은 영속성 컨텍스트와 무관하게 DB에 바로 쿼리문이 입력됨.(DB결과와 영속성 컨텍스트 내용이 다름)
+     * 아래에서는 DB결과는 비회원으로 되어 있어도, 영속성 컨텍스트에서는 member1, member2로 되어 있음.
+     * 아래의 for문을 참조
+     */
+    @Test
+    public void bulkUpdate() {
+        queryFactory
+                .update(member)
+                .set(member.username, "비회원")
+                .where(member.age.lt(28))
+                .execute();
+//        em.flush();
+//        em.clear();
+
+        List<Member> result = queryFactory
+                .selectFrom(member)
+                .fetch();
+
+        // DB에서는 비회원으로 바뀌지만, 영속성 컨텍스트에서는 member1, 2로 남아있음(영속성 컨텍스트가 우선을 가지기 때문)
+        // 따라서 위에서 update 이후 영속성 context를 DB와 데이터를 맞추고 초기화 해주는 작업이 필요함.(flush(), clear())
+        for (Member member1 : result) {
+            System.out.println("영속성 컨텍스트 = " + member1);
+        }
+    }
+
+    @Test
+    public void bulkAdd() {
+        queryFactory
+                .update(member)
+                .set(member.age, member.age.add(1)) //빼기일 경우 -1 (minus가 없음), 곱하기 : multiply()
+                .execute();
+    }
+
+    @Test
+    public void bulkDelete() {
+        queryFactory
+                .delete(member)
+                .where(member.age.gt(18))
+                .execute();
+    }
+
+
 }
