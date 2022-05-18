@@ -1,4 +1,5 @@
-server.port: 8081
+server:
+  port: 8081
 
 spring:
   datasource:
@@ -17,7 +18,7 @@ spring:
         use_sql_comments: true #querydsl이 실행되는 쿼리문을 출력하는 로그
   config:
     activate:
-      on-profile: local
+      on-profile: test
 
 logging.level:
    org.hibernate.SQL: debug
