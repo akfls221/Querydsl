@@ -1,6 +1,7 @@
 package study.querydsl.controller;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -12,13 +13,15 @@ import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 
 @Profile("local")
+@Component
 @RequiredArgsConstructor
 public class InitMember {
 
     private final InitMemberService initMemberService;
 
     @PostConstruct
-    public void init() {
+    public void initPost() {
+
         initMemberService.init();
     }
 

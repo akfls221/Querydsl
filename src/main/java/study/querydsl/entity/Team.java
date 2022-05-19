@@ -18,7 +18,7 @@ public class Team {
 
     private String name;
 
-    @OneToMany(mappedBy = "team")
+    @OneToMany(mappedBy = "team", cascade = CascadeType.ALL)
     List<Member> members = new ArrayList<>();
 
     public Team(String name) {
