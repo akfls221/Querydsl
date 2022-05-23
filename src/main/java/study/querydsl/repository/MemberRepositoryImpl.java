@@ -109,7 +109,7 @@ public class MemberRepositoryImpl implements MemberRepositoryCustom{
                 );
 
 
-        return PageableExecutionUtils.getPage(content, pageable, () -> total.fetchCount());
+        return PageableExecutionUtils.getPage(content, pageable, () -> total.fetchCount()); // CountQuery 최적화
     }
 
     private BooleanExpression ageLoe(Integer ageLoe) {
